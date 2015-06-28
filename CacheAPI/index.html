@@ -1,0 +1,18 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.1/angular.js"></script>
+    <script type="text/javascript">
+        angular.module('CacheCow', [])
+        .run(function ($http) {
+            $http.get('api/person').then(function (data) {
+                console.log(data);
+            });
+        })
+    </script>
+</head>
+<body ng-app="CacheCow">
+ 
+</body>
+</html>
