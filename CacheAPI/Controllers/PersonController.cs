@@ -46,11 +46,11 @@ namespace CacheAPI.Controllers
             var people = table.ExecuteQuery(new TableQuery<Person>().Where(TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, "people")));
 
             // Handle caching
-            DateTimeOffset lastModified;
-            this.ReturnIfNotModified(people, out lastModified);
+            EntitiesETag cacheKey;
+            this.ReturnIfNotModified(people, out cacheKey);
 
             // Convert entities to models and return response with cache headers
-            return CachedOk(people.Select(p => new PersonModel(p)), lastModified);
+            return CachedOk(people.Select(p => new PersonModel(p)), cacheKey);
         }
         
         [HttpPut]

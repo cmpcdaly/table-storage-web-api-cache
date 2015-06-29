@@ -13,20 +13,18 @@ namespace CacheAPI.Controllers
 {
     public class CacheApiController : ApiController 
     {
-        public void ReturnIfNotModified(IEnumerable<TableEntity> entities, out DateTimeOffset lastModified)
+        public void ReturnIfNotModified(IEnumerable<TableEntity> entities, out EntitiesETag cacheKey)
         {
             // Get the If-None-Match header from the request
             var ifNoneMatch = this.Request.Headers.IfNoneMatch.FirstOrDefault();
 
-            // Get the last modified date for the entities
-            lastModified = entities.Select(entity => entity.Timestamp).Max();
+            // Create the new EntitiesCacheKey
+            cacheKey = new EntitiesETag(entities);
 
             // If the user has sent this header back
             if (ifNoneMatch != null)
             {
-                var newETag = GenerateTag(lastModified);
-
-                if (newETag.Equals(ifNoneMatch.Tag))
+                if (cacheKey.Tag.Equals(ifNoneMatch.Tag))
                 {
                     // If the lastModified date is not greater than the if-modified-since, return 304
                     throw new HttpResponseException(HttpStatusCode.NotModified);
@@ -34,7 +32,7 @@ namespace CacheAPI.Controllers
             }
         }
 
-        public IHttpActionResult CachedOk<T>(T content, DateTimeOffset lastModified)
+        public IHttpActionResult CachedOk<T>(T content, EntitiesETag cacheKey)
         {
             var response = this.Request.CreateResponse(HttpStatusCode.OK, content);
             response.Headers.CacheControl = new CacheControlHeaderValue()
@@ -43,16 +41,9 @@ namespace CacheAPI.Controllers
                 Private = true
             };
 
-            string tag = GenerateTag(lastModified);
-            response.Headers.ETag = new EntityTagHeaderValue(tag, true);
+            response.Headers.ETag = new EntityTagHeaderValue(cacheKey.Tag, true);
 
             return this.ResponseMessage(response);
-        }
-
-        private string GenerateTag(DateTimeOffset dateTime)
-        {
-            // ToDo: What if an entity is deleted?
-            return string.Concat("\"", dateTime.UtcTicks.ToString(), "\"");
         }
     }
 }
